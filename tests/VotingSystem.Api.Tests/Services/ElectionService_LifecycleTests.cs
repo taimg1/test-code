@@ -11,6 +11,8 @@ public class ElectionService_LifecycleTests
     {
         using var ctx = TestHelpers.CreateInMemoryContext();
         var election = TestHelpers.BuildElection(ElectionStatus.Draft);
+        election.Candidates.Add(TestHelpers.BuildCandidate(election.Id, "A"));
+        election.Candidates.Add(TestHelpers.BuildCandidate(election.Id, "B"));
         ctx.Elections.Add(election);
         await ctx.SaveChangesAsync();
 
@@ -18,6 +20,31 @@ public class ElectionService_LifecycleTests
 
         var updated = await ctx.Elections.FindAsync(election.Id);
         updated!.Status.ShouldBe(ElectionStatus.Active);
+    }
+
+    [Fact]
+    public async Task OpenElection_WithZeroCandidates_Throws()
+    {
+        using var ctx = TestHelpers.CreateInMemoryContext();
+        var election = TestHelpers.BuildElection(ElectionStatus.Draft);
+        ctx.Elections.Add(election);
+        await ctx.SaveChangesAsync();
+
+        await Should.ThrowAsync<InvalidOperationException>(
+            () => TestHelpers.CreateService(ctx).OpenElectionAsync(election.Id));
+    }
+
+    [Fact]
+    public async Task OpenElection_WithOneCandidate_Throws()
+    {
+        using var ctx = TestHelpers.CreateInMemoryContext();
+        var election = TestHelpers.BuildElection(ElectionStatus.Draft);
+        election.Candidates.Add(TestHelpers.BuildCandidate(election.Id));
+        ctx.Elections.Add(election);
+        await ctx.SaveChangesAsync();
+
+        await Should.ThrowAsync<InvalidOperationException>(
+            () => TestHelpers.CreateService(ctx).OpenElectionAsync(election.Id));
     }
 
     [Theory]

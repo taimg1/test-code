@@ -59,6 +59,7 @@ jobs:
           ASPNETCORE_URLS: 'http://localhost:5032'
           ASPNETCORE_ENVIRONMENT: 'Production'
           DISABLE_HTTPS_REDIRECT: 'true'
+          SEED_PERFORMANCE_DATA: 'true'
         run: |
           # Без --no-launch-profile dotnet підхоплює applicationUrl з launchSettings (5083) і ігнорує ASPNETCORE_URLS.
           nohup dotnet run --project VotingSystem.Api/VotingSystem.Api.csproj \

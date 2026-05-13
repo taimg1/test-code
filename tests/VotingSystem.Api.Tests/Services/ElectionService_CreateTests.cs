@@ -1,3 +1,4 @@
+using AutoFixture;
 using VotingSystem.Api.Domain.Enums;
 using VotingSystem.Api.DTOs;
 
@@ -5,6 +6,24 @@ namespace VotingSystem.Api.Tests.Services;
 
 public class ElectionService_CreateTests
 {
+    private static readonly Fixture Fixture = new();
+
+    [Fact]
+    public async Task CreateElection_WithAutoFixtureStrings_PersistsTitleAndDescription()
+    {
+        using var ctx = TestHelpers.CreateInMemoryContext();
+        var sut = TestHelpers.CreateService(ctx);
+
+        var title = Fixture.Create<string>();
+        var description = Fixture.Create<string>();
+        var dto = new CreateElectionDto(title, description, DateTime.UtcNow, DateTime.UtcNow.AddDays(1), ElectionType.SingleChoice);
+
+        var result = await sut.CreateElectionAsync(dto);
+
+        result.Title.ShouldBe(title);
+        result.Description.ShouldBe(description);
+    }
+
     [Fact]
     public async Task CreateElection_SetsStatusToDraft()
     {

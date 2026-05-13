@@ -1,42 +1,26 @@
 using Bogus;
 using Microsoft.EntityFrameworkCore;
-using Testcontainers.PostgreSql;
 using VotingSystem.Api.Domain.Entities;
 using VotingSystem.Api.Domain.Enums;
-using VotingSystem.Api.Data;
 
-namespace VotingSystem.Api.Tests.Database;
+namespace VotingSystem.Api.Data;
 
-public class VotingDatabaseFixture : IAsyncLifetime
+/// <summary>
+/// Large deterministic dataset for performance / volume tests (~10k vote rows).
+/// </summary>
+public static class VotingPerformanceSeed
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:16")
-        .Build();
+    public const int TargetVoteRows = 9850;
 
-    public VotingDbContext CreateDbContext()
+    public static async Task SeedAsync(VotingDbContext db, CancellationToken cancellationToken = default)
     {
-        var options = new DbContextOptionsBuilder<VotingDbContext>()
-            .UseNpgsql(_postgres.GetConnectionString())
-            .Options;
-        return new VotingDbContext(options);
-    }
+        if (await db.Elections.AnyAsync(cancellationToken))
+            return;
 
-    public async ValueTask InitializeAsync()
-    {
-        await _postgres.StartAsync();
-
-        await using var db = CreateDbContext();
-        await db.Database.MigrateAsync(CancellationToken.None);
-
-        await SeedDataAsync(db, CancellationToken.None);
-    }
-
-    private static async Task SeedDataAsync(VotingDbContext db, CancellationToken cancellationToken)
-    {
         var faker = new Faker();
         var random = new Random(42);
         const int batchSize = 500;
         const int totalElections = 20;
-        const int targetVoteRows = 9850;
 
         var electionFaker = new Faker<Election>()
             .RuleFor(e => e.Id, _ => Guid.NewGuid())
@@ -88,17 +72,17 @@ public class VotingDatabaseFixture : IAsyncLifetime
             .GroupBy(c => c.ElectionId)
             .ToDictionary(g => g.Key, g => g.ToList());
 
-        var votes = new List<Vote>(targetVoteRows);
+        var votes = new List<Vote>(TargetVoteRows);
         var voteKeys = new HashSet<(Guid ElectionId, string EmailLower, Guid CandidateId)>();
 
-        for (var i = 0; i < targetVoteRows;)
+        for (var i = 0; i < TargetVoteRows;)
         {
             var election = elections[random.Next(0, elections.Count)];
             if (!candidatesByElection.TryGetValue(election.Id, out var electionCands) || electionCands.Count == 0)
                 continue;
 
             var canDoRankedBlock = election.Type == ElectionType.RankedChoice
-                && i + electionCands.Count <= targetVoteRows;
+                && i + electionCands.Count <= TargetVoteRows;
 
             if (canDoRankedBlock)
             {
@@ -154,10 +138,5 @@ public class VotingDatabaseFixture : IAsyncLifetime
             db.Votes.AddRange(votes);
             await db.SaveChangesAsync(cancellationToken);
         }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await _postgres.DisposeAsync();
     }
 }

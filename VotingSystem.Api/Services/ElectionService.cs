@@ -138,11 +138,16 @@ public class ElectionService : IElectionService
 
     public async Task OpenElectionAsync(Guid electionId)
     {
-        var election = await _context.Elections.FindAsync(electionId);
+        var election = await _context.Elections
+            .Include(e => e.Candidates)
+            .FirstOrDefaultAsync(e => e.Id == electionId);
         if (election == null) throw new KeyNotFoundException("Вибори не знайдено.");
 
         if (election.Status != ElectionStatus.Draft)
             throw new InvalidOperationException("Відкрити можна лише вибори у статусі Draft.");
+
+        if (election.Candidates.Count < 2)
+            throw new InvalidOperationException("Щоб відкрити вибори, потрібно щонайменше двох кандидатів.");
 
         election.Status = ElectionStatus.Active;
         await _context.SaveChangesAsync();
@@ -171,6 +176,10 @@ public class ElectionService : IElectionService
 
         if (election.Status != ElectionStatus.Active)
             throw new InvalidOperationException("Голосувати можна тільки під час активного періоду виборів.");
+
+        var now = DateTime.UtcNow;
+        if (now < election.StartDate || now > election.EndDate)
+            throw new InvalidOperationException("Голосування можливе лише в межах періоду виборів (UTC).");
 
         var hasVoted = await _context.Votes.AnyAsync(v => v.ElectionId == electionId && v.VoterEmail == request.VoterEmail);
         if (hasVoted)

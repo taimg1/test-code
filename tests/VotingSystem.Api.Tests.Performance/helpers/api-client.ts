@@ -88,7 +88,9 @@ export interface PrepareActiveElectionOpts {
 
 export interface PreparedElection {
   electionId: string;
+  /** First candidate (e.g. for single-choice vote payload). */
   candidateId: string;
+  secondCandidateId: string;
 }
 
 export function prepareActiveElection(opts: PrepareActiveElectionOpts = {}): PreparedElection {
@@ -98,16 +100,22 @@ export function prepareActiveElection(opts: PrepareActiveElectionOpts = {}): Pre
   }
   const electionId = (JSON.parse(createRes.body as string) as { id: string }).id;
 
-  const candRes = addCandidate(electionId, { name: "Setup Candidate" });
-  if (candRes.status !== 200 && candRes.status !== 201) {
-    throw new Error(`addCandidate failed: ${candRes.status} ${candRes.body}`);
+  const candRes1 = addCandidate(electionId, { name: "Setup Candidate A" });
+  if (candRes1.status !== 200 && candRes1.status !== 201) {
+    throw new Error(`addCandidate failed: ${candRes1.status} ${candRes1.body}`);
   }
-  const candidateId = (JSON.parse(candRes.body as string) as { id: string }).id;
+  const candidateId = (JSON.parse(candRes1.body as string) as { id: string }).id;
+
+  const candRes2 = addCandidate(electionId, { name: "Setup Candidate B" });
+  if (candRes2.status !== 200 && candRes2.status !== 201) {
+    throw new Error(`addCandidate failed: ${candRes2.status} ${candRes2.body}`);
+  }
+  const secondCandidateId = (JSON.parse(candRes2.body as string) as { id: string }).id;
 
   const openRes = openElection(electionId);
   if (openRes.status !== 204 && openRes.status !== 200) {
     throw new Error(`openElection failed: ${openRes.status} ${openRes.body}`);
   }
 
-  return { electionId, candidateId };
+  return { electionId, candidateId, secondCandidateId };
 }

@@ -29,10 +29,14 @@ export default function (): void {
   if (createRes.status !== 201) return;
   const electionId = JSON.parse(createRes.body as string).id as string;
 
-  const candRes = addCandidate(electionId);
-  check(candRes, { "add candidate 200": (r) => r.status === 200 });
-  if (candRes.status !== 200) return;
-  const candidateId = JSON.parse(candRes.body as string).id as string;
+  const candRes1 = addCandidate(electionId);
+  check(candRes1, { "add candidate 1 — 200": (r) => r.status === 200 });
+  if (candRes1.status !== 200) return;
+  const candidateId = JSON.parse(candRes1.body as string).id as string;
+
+  const candRes2 = addCandidate(electionId, { name: "Smoke Candidate B" });
+  check(candRes2, { "add candidate 2 — 200": (r) => r.status === 200 });
+  if (candRes2.status !== 200) return;
 
   const openRes = openElection(electionId);
   check(openRes, { "open election 204": (r) => r.status === 204 });

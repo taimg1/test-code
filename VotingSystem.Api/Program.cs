@@ -27,7 +27,11 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<VotingDbContext>();
     if (app.Environment.EnvironmentName != "Testing")
+    {
         await context.Database.MigrateAsync();
+        if (string.Equals(Environment.GetEnvironmentVariable("SEED_PERFORMANCE_DATA"), "true", StringComparison.OrdinalIgnoreCase))
+            await VotingPerformanceSeed.SeedAsync(context);
+    }
 }
 
 // Configure the HTTP request pipeline.

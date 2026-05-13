@@ -1,3 +1,4 @@
+using System.Linq;
 using VotingSystem.Api.Domain.Enums;
 using VotingSystem.Api.DTOs;
 
@@ -22,12 +23,12 @@ public class ElectionService_VoteValidationTests
     {
         using var ctx = TestHelpers.CreateInMemoryContext();
         var election = TestHelpers.BuildElection(status);
-        var candidate = TestHelpers.BuildCandidate(election.Id);
-        election.Candidates.Add(candidate);
+        election.Candidates.Add(TestHelpers.BuildCandidate(election.Id, "A"));
+        election.Candidates.Add(TestHelpers.BuildCandidate(election.Id, "B"));
         ctx.Elections.Add(election);
         await ctx.SaveChangesAsync();
 
-        var dto = new SubmitVoteDto("voter@x.com", new() { new VoteItemDto(candidate.Id, null) });
+        var dto = new SubmitVoteDto("voter@x.com", new() { new VoteItemDto(election.Candidates.First().Id, null) });
 
         await Should.ThrowAsync<InvalidOperationException>(
             () => TestHelpers.CreateService(ctx).VoteAsync(election.Id, dto));
@@ -38,13 +39,13 @@ public class ElectionService_VoteValidationTests
     {
         using var ctx = TestHelpers.CreateInMemoryContext();
         var election = TestHelpers.BuildElection(ElectionStatus.Active);
-        var candidate = TestHelpers.BuildCandidate(election.Id);
-        election.Candidates.Add(candidate);
+        election.Candidates.Add(TestHelpers.BuildCandidate(election.Id, "A"));
+        election.Candidates.Add(TestHelpers.BuildCandidate(election.Id, "B"));
         ctx.Elections.Add(election);
         await ctx.SaveChangesAsync();
 
         var sut = TestHelpers.CreateService(ctx);
-        var dto = new SubmitVoteDto("voter@x.com", new() { new VoteItemDto(candidate.Id, null) });
+        var dto = new SubmitVoteDto("voter@x.com", new() { new VoteItemDto(election.Candidates.First().Id, null) });
 
         await sut.VoteAsync(election.Id, dto);
 
@@ -78,7 +79,8 @@ public class ElectionService_VoteValidationTests
     {
         using var ctx = TestHelpers.CreateInMemoryContext();
         var election = TestHelpers.BuildElection(ElectionStatus.Active, ElectionType.SingleChoice);
-        election.Candidates.Add(TestHelpers.BuildCandidate(election.Id));
+        election.Candidates.Add(TestHelpers.BuildCandidate(election.Id, "A"));
+        election.Candidates.Add(TestHelpers.BuildCandidate(election.Id, "B"));
         ctx.Elections.Add(election);
         await ctx.SaveChangesAsync();
 
@@ -93,8 +95,9 @@ public class ElectionService_VoteValidationTests
     {
         using var ctx = TestHelpers.CreateInMemoryContext();
         var election = TestHelpers.BuildElection(ElectionStatus.Active, ElectionType.SingleChoice);
-        var candidate = TestHelpers.BuildCandidate(election.Id);
+        var candidate = TestHelpers.BuildCandidate(election.Id, "A");
         election.Candidates.Add(candidate);
+        election.Candidates.Add(TestHelpers.BuildCandidate(election.Id, "B"));
         ctx.Elections.Add(election);
         await ctx.SaveChangesAsync();
 
@@ -218,5 +221,43 @@ public class ElectionService_VoteValidationTests
         await TestHelpers.CreateService(ctx).VoteAsync(election.Id, dto);
 
         ctx.Votes.Count(v => v.ElectionId == election.Id).ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task Vote_ActiveElection_BeforeStartDate_Throws()
+    {
+        using var ctx = TestHelpers.CreateInMemoryContext();
+        var election = TestHelpers.BuildElection(ElectionStatus.Active, ElectionType.SingleChoice);
+        election.StartDate = DateTime.UtcNow.AddDays(1);
+        election.EndDate = DateTime.UtcNow.AddDays(2);
+        election.Candidates.Add(TestHelpers.BuildCandidate(election.Id, "A"));
+        election.Candidates.Add(TestHelpers.BuildCandidate(election.Id, "B"));
+        ctx.Elections.Add(election);
+        await ctx.SaveChangesAsync();
+
+        var dto = new SubmitVoteDto("voter@x.com", new() { new VoteItemDto(election.Candidates.First().Id, null) });
+
+        var ex = await Should.ThrowAsync<InvalidOperationException>(
+            () => TestHelpers.CreateService(ctx).VoteAsync(election.Id, dto));
+        ex.Message.ShouldContain("UTC");
+    }
+
+    [Fact]
+    public async Task Vote_ActiveElection_AfterEndDate_Throws()
+    {
+        using var ctx = TestHelpers.CreateInMemoryContext();
+        var election = TestHelpers.BuildElection(ElectionStatus.Active, ElectionType.SingleChoice);
+        election.StartDate = DateTime.UtcNow.AddDays(-10);
+        election.EndDate = DateTime.UtcNow.AddDays(-1);
+        election.Candidates.Add(TestHelpers.BuildCandidate(election.Id, "A"));
+        election.Candidates.Add(TestHelpers.BuildCandidate(election.Id, "B"));
+        ctx.Elections.Add(election);
+        await ctx.SaveChangesAsync();
+
+        var dto = new SubmitVoteDto("voter@x.com", new() { new VoteItemDto(election.Candidates.First().Id, null) });
+
+        var ex = await Should.ThrowAsync<InvalidOperationException>(
+            () => TestHelpers.CreateService(ctx).VoteAsync(election.Id, dto));
+        ex.Message.ShouldContain("UTC");
     }
 }
