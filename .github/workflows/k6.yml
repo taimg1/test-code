@@ -87,10 +87,11 @@ jobs:
       - name: Determine test type
         id: test-type
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "type=smoke" >> "$GITHUB_OUTPUT"
-          else
+          # workflow_dispatch має inputs; push/pull_request — inputs порожні, інакше шлях scripts/-test.ts.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "type=${{ inputs.test-type }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=smoke" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run k6
