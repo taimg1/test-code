@@ -5,7 +5,7 @@ using VotingSystem.Api.Domain.Enums;
 using VotingSystem.Api.Infrastructure.Data;
 using VotingSystem.Api.Services;
 
-namespace VotingSystem.UnitTests.Services;
+namespace VotingSystem.Api.Tests.Services;
 
 internal static class TestHelpers
 {

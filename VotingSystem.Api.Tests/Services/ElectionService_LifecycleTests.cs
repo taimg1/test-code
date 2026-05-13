@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using VotingSystem.Api.Domain.Enums;
+using VotingSystem.Api.DTOs;
 
-namespace VotingSystem.UnitTests.Services;
+namespace VotingSystem.Api.Tests.Services;
 
 public class ElectionService_LifecycleTests
 {
@@ -16,7 +17,7 @@ public class ElectionService_LifecycleTests
         await TestHelpers.CreateService(ctx).OpenElectionAsync(election.Id);
 
         var updated = await ctx.Elections.FindAsync(election.Id);
-        Assert.Equal(ElectionStatus.Active, updated!.Status);
+        updated!.Status.ShouldBe(ElectionStatus.Active);
     }
 
     [Theory]
@@ -29,7 +30,7 @@ public class ElectionService_LifecycleTests
         ctx.Elections.Add(election);
         await ctx.SaveChangesAsync();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Should.ThrowAsync<InvalidOperationException>(
             () => TestHelpers.CreateService(ctx).OpenElectionAsync(election.Id));
     }
 
@@ -37,7 +38,7 @@ public class ElectionService_LifecycleTests
     public async Task OpenElection_NonExistent_ThrowsKeyNotFound()
     {
         using var ctx = TestHelpers.CreateInMemoryContext();
-        await Assert.ThrowsAsync<KeyNotFoundException>(
+        await Should.ThrowAsync<KeyNotFoundException>(
             () => TestHelpers.CreateService(ctx).OpenElectionAsync(Guid.NewGuid()));
     }
 
@@ -54,7 +55,7 @@ public class ElectionService_LifecycleTests
         await TestHelpers.CreateService(ctx).CloseElectionAsync(election.Id);
 
         var updated = await ctx.Elections.FindAsync(election.Id);
-        Assert.Equal(ElectionStatus.Closed, updated!.Status);
+        updated!.Status.ShouldBe(ElectionStatus.Closed);
     }
 
     [Fact]
@@ -65,7 +66,7 @@ public class ElectionService_LifecycleTests
         ctx.Elections.Add(election);
         await ctx.SaveChangesAsync();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Should.ThrowAsync<InvalidOperationException>(
             () => TestHelpers.CreateService(ctx).CloseElectionAsync(election.Id));
     }
 
@@ -73,7 +74,7 @@ public class ElectionService_LifecycleTests
     public async Task CloseElection_NonExistent_ThrowsKeyNotFound()
     {
         using var ctx = TestHelpers.CreateInMemoryContext();
-        await Assert.ThrowsAsync<KeyNotFoundException>(
+        await Should.ThrowAsync<KeyNotFoundException>(
             () => TestHelpers.CreateService(ctx).CloseElectionAsync(Guid.NewGuid()));
     }
 
@@ -85,11 +86,11 @@ public class ElectionService_LifecycleTests
         ctx.Elections.Add(election);
         await ctx.SaveChangesAsync();
 
-        var dto = new VotingSystem.Api.DTOs.CreateCandidateDto("Name", "Desc", "Party", null);
+        var dto = new CreateCandidateDto("Name", "Desc", "Party", null);
         var result = await TestHelpers.CreateService(ctx).AddCandidateAsync(election.Id, dto);
 
-        Assert.NotEqual(Guid.Empty, result.Id);
-        Assert.Equal(1, ctx.Candidates.Count(c => c.ElectionId == election.Id));
+        result.Id.ShouldNotBe(Guid.Empty);
+        ctx.Candidates.Count(c => c.ElectionId == election.Id).ShouldBe(1);
     }
 
     [Theory]
@@ -102,9 +103,9 @@ public class ElectionService_LifecycleTests
         ctx.Elections.Add(election);
         await ctx.SaveChangesAsync();
 
-        var dto = new VotingSystem.Api.DTOs.CreateCandidateDto("N", "D", "P", null);
+        var dto = new CreateCandidateDto("N", "D", "P", null);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Should.ThrowAsync<InvalidOperationException>(
             () => TestHelpers.CreateService(ctx).AddCandidateAsync(election.Id, dto));
     }
 
@@ -112,9 +113,9 @@ public class ElectionService_LifecycleTests
     public async Task AddCandidate_NonExistentElection_ThrowsKeyNotFound()
     {
         using var ctx = TestHelpers.CreateInMemoryContext();
-        var dto = new VotingSystem.Api.DTOs.CreateCandidateDto("N", "D", "P", null);
+        var dto = new CreateCandidateDto("N", "D", "P", null);
 
-        await Assert.ThrowsAsync<KeyNotFoundException>(
+        await Should.ThrowAsync<KeyNotFoundException>(
             () => TestHelpers.CreateService(ctx).AddCandidateAsync(Guid.NewGuid(), dto));
     }
 }

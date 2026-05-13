@@ -1,7 +1,7 @@
 using VotingSystem.Api.Domain.Enums;
 using VotingSystem.Api.DTOs;
 
-namespace VotingSystem.UnitTests.Services;
+namespace VotingSystem.Api.Tests.Services;
 
 public class ElectionService_VoteValidationTests
 {
@@ -11,7 +11,7 @@ public class ElectionService_VoteValidationTests
         using var ctx = TestHelpers.CreateInMemoryContext();
         var dto = new SubmitVoteDto("voter@x.com", new() { new VoteItemDto(Guid.NewGuid(), null) });
 
-        await Assert.ThrowsAsync<KeyNotFoundException>(
+        await Should.ThrowAsync<KeyNotFoundException>(
             () => TestHelpers.CreateService(ctx).VoteAsync(Guid.NewGuid(), dto));
     }
 
@@ -29,7 +29,7 @@ public class ElectionService_VoteValidationTests
 
         var dto = new SubmitVoteDto("voter@x.com", new() { new VoteItemDto(candidate.Id, null) });
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Should.ThrowAsync<InvalidOperationException>(
             () => TestHelpers.CreateService(ctx).VoteAsync(election.Id, dto));
     }
 
@@ -48,7 +48,7 @@ public class ElectionService_VoteValidationTests
 
         await sut.VoteAsync(election.Id, dto);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Should.ThrowAsync<InvalidOperationException>(
             () => sut.VoteAsync(election.Id, dto));
     }
 
@@ -69,7 +69,7 @@ public class ElectionService_VoteValidationTests
             .Select(c => new VoteItemDto(c.Id, null)).ToList();
         var dto = new SubmitVoteDto("voter@x.com", votes);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Should.ThrowAsync<InvalidOperationException>(
             () => TestHelpers.CreateService(ctx).VoteAsync(election.Id, dto));
     }
 
@@ -84,7 +84,7 @@ public class ElectionService_VoteValidationTests
 
         var dto = new SubmitVoteDto("voter@x.com", new() { new VoteItemDto(Guid.NewGuid(), null) });
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Should.ThrowAsync<InvalidOperationException>(
             () => TestHelpers.CreateService(ctx).VoteAsync(election.Id, dto));
     }
 
@@ -101,7 +101,7 @@ public class ElectionService_VoteValidationTests
         var dto = new SubmitVoteDto("voter@x.com", new() { new VoteItemDto(candidate.Id, null) });
         await TestHelpers.CreateService(ctx).VoteAsync(election.Id, dto);
 
-        Assert.Equal(1, ctx.Votes.Count(v => v.ElectionId == election.Id));
+        ctx.Votes.Count(v => v.ElectionId == election.Id).ShouldBe(1);
     }
 
     [Fact]
@@ -118,7 +118,7 @@ public class ElectionService_VoteValidationTests
 
         var dto = new SubmitVoteDto("voter@x.com", new() { new VoteItemDto(c1.Id, 1) });
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Should.ThrowAsync<InvalidOperationException>(
             () => TestHelpers.CreateService(ctx).VoteAsync(election.Id, dto));
     }
 
@@ -140,7 +140,7 @@ public class ElectionService_VoteValidationTests
             new VoteItemDto(c1.Id, 2)
         });
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Should.ThrowAsync<InvalidOperationException>(
             () => TestHelpers.CreateService(ctx).VoteAsync(election.Id, dto));
     }
 
@@ -168,7 +168,7 @@ public class ElectionService_VoteValidationTests
             new VoteItemDto(c3.Id, badRank)
         });
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Should.ThrowAsync<InvalidOperationException>(
             () => TestHelpers.CreateService(ctx).VoteAsync(election.Id, dto));
     }
 
@@ -190,7 +190,7 @@ public class ElectionService_VoteValidationTests
             new VoteItemDto(c2.Id, 1)
         });
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Should.ThrowAsync<InvalidOperationException>(
             () => TestHelpers.CreateService(ctx).VoteAsync(election.Id, dto));
     }
 
@@ -217,6 +217,6 @@ public class ElectionService_VoteValidationTests
 
         await TestHelpers.CreateService(ctx).VoteAsync(election.Id, dto);
 
-        Assert.Equal(3, ctx.Votes.Count(v => v.ElectionId == election.Id));
+        ctx.Votes.Count(v => v.ElectionId == election.Id).ShouldBe(3);
     }
 }

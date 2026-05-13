@@ -1,29 +1,23 @@
-using AutoFixture;
 using VotingSystem.Api.Domain.Enums;
 using VotingSystem.Api.DTOs;
 
-namespace VotingSystem.UnitTests.Services;
+namespace VotingSystem.Api.Tests.Services;
 
 public class ElectionService_CreateTests
 {
-    private readonly Fixture _fixture = new();
-
     [Fact]
     public async Task CreateElection_SetsStatusToDraft()
     {
         using var ctx = TestHelpers.CreateInMemoryContext();
         var sut = TestHelpers.CreateService(ctx);
 
-        var dto = new CreateElectionDto(
-            _fixture.Create<string>(),
-            _fixture.Create<string>(),
-            DateTime.UtcNow,
-            DateTime.UtcNow.AddDays(1),
-            ElectionType.SingleChoice);
+        var dto = ElectionServiceTestData.ValidCreateElectionDto(
+            title: Guid.NewGuid().ToString("N"),
+            description: Guid.NewGuid().ToString("N"));
 
         var result = await sut.CreateElectionAsync(dto);
 
-        Assert.Equal(ElectionStatus.Draft, result.Status);
+        result.Status.ShouldBe(ElectionStatus.Draft);
     }
 
     [Fact]
@@ -36,7 +30,7 @@ public class ElectionService_CreateTests
 
         var result = await sut.CreateElectionAsync(dto);
 
-        Assert.NotEqual(Guid.Empty, result.Id);
+        result.Id.ShouldNotBe(Guid.Empty);
     }
 
     [Fact]
@@ -50,8 +44,8 @@ public class ElectionService_CreateTests
 
         var result = await sut.CreateElectionAsync(dto);
 
-        Assert.Equal(DateTimeKind.Utc, result.StartDate.Kind);
-        Assert.Equal(DateTimeKind.Utc, result.EndDate.Kind);
+        result.StartDate.Kind.ShouldBe(DateTimeKind.Utc);
+        result.EndDate.Kind.ShouldBe(DateTimeKind.Utc);
     }
 
     [Theory]
@@ -66,7 +60,7 @@ public class ElectionService_CreateTests
 
         var result = await sut.CreateElectionAsync(dto);
 
-        Assert.Equal(type, result.Type);
+        result.Type.ShouldBe(type);
     }
 
     [Fact]
@@ -79,7 +73,7 @@ public class ElectionService_CreateTests
 
         var result = await sut.CreateElectionAsync(dto);
 
-        Assert.Empty(result.Candidates);
+        result.Candidates.ShouldBeEmpty();
     }
 
     [Fact]
@@ -91,6 +85,6 @@ public class ElectionService_CreateTests
         var dto = new CreateElectionDto("Persisted", "Desc", DateTime.UtcNow, DateTime.UtcNow.AddDays(1), ElectionType.SingleChoice);
         await sut.CreateElectionAsync(dto);
 
-        Assert.Equal(1, ctx.Elections.Count());
+        ctx.Elections.Count().ShouldBe(1);
     }
 }

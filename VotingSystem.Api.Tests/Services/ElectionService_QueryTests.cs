@@ -1,7 +1,7 @@
 using VotingSystem.Api.Domain.Entities;
 using VotingSystem.Api.Domain.Enums;
 
-namespace VotingSystem.UnitTests.Services;
+namespace VotingSystem.Api.Tests.Services;
 
 public class ElectionService_QueryTests
 {
@@ -9,7 +9,7 @@ public class ElectionService_QueryTests
     public async Task GetElection_NonExistent_ThrowsKeyNotFound()
     {
         using var ctx = TestHelpers.CreateInMemoryContext();
-        await Assert.ThrowsAsync<KeyNotFoundException>(
+        await Should.ThrowAsync<KeyNotFoundException>(
             () => TestHelpers.CreateService(ctx).GetElectionAsync(Guid.NewGuid()));
     }
 
@@ -23,7 +23,7 @@ public class ElectionService_QueryTests
 
         var result = await TestHelpers.CreateService(ctx).GetElectionAsync(election.Id);
 
-        Assert.Equal(election.Id, result.Id);
+        result.Id.ShouldBe(election.Id);
     }
 
     [Fact]
@@ -37,7 +37,7 @@ public class ElectionService_QueryTests
 
         var result = await TestHelpers.CreateService(ctx).GetElectionsAsync(null);
 
-        Assert.Equal(3, result.Count());
+        result.Count().ShouldBe(3);
     }
 
     [Theory]
@@ -54,14 +54,14 @@ public class ElectionService_QueryTests
 
         var result = await TestHelpers.CreateService(ctx).GetElectionsAsync(filter);
 
-        Assert.Equal(expected, result.Count());
+        result.Count().ShouldBe(expected);
     }
 
     [Fact]
     public async Task GetTurnout_NonExistent_ThrowsKeyNotFound()
     {
         using var ctx = TestHelpers.CreateInMemoryContext();
-        await Assert.ThrowsAsync<KeyNotFoundException>(
+        await Should.ThrowAsync<KeyNotFoundException>(
             () => TestHelpers.CreateService(ctx).GetTurnoutAsync(Guid.NewGuid()));
     }
 
@@ -75,7 +75,7 @@ public class ElectionService_QueryTests
 
         var result = await TestHelpers.CreateService(ctx).GetTurnoutAsync(election.Id);
 
-        Assert.Equal(0, result.TotalVoters);
+        result.TotalVoters.ShouldBe(0);
     }
 
     [Fact]
@@ -92,6 +92,6 @@ public class ElectionService_QueryTests
 
         var result = await TestHelpers.CreateService(ctx).GetTurnoutAsync(election.Id);
 
-        Assert.Equal(2, result.TotalVoters);
+        result.TotalVoters.ShouldBe(2);
     }
 }

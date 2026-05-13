@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="VotingSystem.Api/VotingSystem.Api.csproj" />
-  <Project Path="VotingSystem.IntegrationTests/VotingSystem.IntegrationTests.csproj" />
-  <Project Path="VotingSystem.UnitTests/VotingSystem.UnitTests.csproj" />
+  <Project Path="VotingSystem.Api.Tests/VotingSystem.Api.Tests.csproj" />
+  <Project Path="VotingSystem.Api.Tests.Integration/VotingSystem.Api.Tests.Integration.csproj" />
+  <Project Path="VotingSystem.Api.Tests.Database/VotingSystem.Api.Tests.Database.csproj" />
 </Solution>

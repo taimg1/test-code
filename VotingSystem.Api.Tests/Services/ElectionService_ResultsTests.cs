@@ -1,7 +1,7 @@
 using VotingSystem.Api.Domain.Entities;
 using VotingSystem.Api.Domain.Enums;
 
-namespace VotingSystem.UnitTests.Services;
+namespace VotingSystem.Api.Tests.Services;
 
 public class ElectionService_ResultsTests
 {
@@ -9,7 +9,7 @@ public class ElectionService_ResultsTests
     public async Task GetResults_NonExistent_ThrowsKeyNotFound()
     {
         using var ctx = TestHelpers.CreateInMemoryContext();
-        await Assert.ThrowsAsync<KeyNotFoundException>(
+        await Should.ThrowAsync<KeyNotFoundException>(
             () => TestHelpers.CreateService(ctx).GetResultsAsync(Guid.NewGuid()));
     }
 
@@ -23,7 +23,7 @@ public class ElectionService_ResultsTests
         ctx.Elections.Add(election);
         await ctx.SaveChangesAsync();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Should.ThrowAsync<InvalidOperationException>(
             () => TestHelpers.CreateService(ctx).GetResultsAsync(election.Id));
     }
 
@@ -45,8 +45,8 @@ public class ElectionService_ResultsTests
 
         var result = await TestHelpers.CreateService(ctx).GetResultsAsync(election.Id);
 
-        Assert.Equal(2, result.Results.Single(r => r.CandidateId == c2.Id).Score);
-        Assert.Equal(1, result.Results.Single(r => r.CandidateId == c1.Id).Score);
+        result.Results.Single(r => r.CandidateId == c2.Id).Score.ShouldBe(2);
+        result.Results.Single(r => r.CandidateId == c1.Id).Score.ShouldBe(1);
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class ElectionService_ResultsTests
 
         var result = await TestHelpers.CreateService(ctx).GetResultsAsync(election.Id);
 
-        Assert.Equal(c2.Id, result.Results.First().CandidateId);
+        result.Results.First().CandidateId.ShouldBe(c2.Id);
     }
 
     [Fact]
@@ -90,9 +90,9 @@ public class ElectionService_ResultsTests
 
         var result = await TestHelpers.CreateService(ctx).GetResultsAsync(election.Id);
 
-        Assert.Equal(3, result.Results.Single(r => r.CandidateId == c1.Id).Score);
-        Assert.Equal(2, result.Results.Single(r => r.CandidateId == c2.Id).Score);
-        Assert.Equal(1, result.Results.Single(r => r.CandidateId == c3.Id).Score);
+        result.Results.Single(r => r.CandidateId == c1.Id).Score.ShouldBe(3);
+        result.Results.Single(r => r.CandidateId == c2.Id).Score.ShouldBe(2);
+        result.Results.Single(r => r.CandidateId == c3.Id).Score.ShouldBe(1);
     }
 
     [Fact]
@@ -107,6 +107,7 @@ public class ElectionService_ResultsTests
 
         var result = await TestHelpers.CreateService(ctx).GetResultsAsync(election.Id);
 
-        Assert.All(result.Results, r => Assert.Equal(0, r.Score));
+        foreach (var r in result.Results)
+            r.Score.ShouldBe(0);
     }
 }

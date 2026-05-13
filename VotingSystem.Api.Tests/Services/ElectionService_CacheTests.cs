@@ -4,7 +4,7 @@ using VotingSystem.Api.Domain.Enums;
 using VotingSystem.Api.DTOs;
 using VotingSystem.Api.Services;
 
-namespace VotingSystem.UnitTests.Services;
+namespace VotingSystem.Api.Tests.Services;
 
 public class ElectionService_CacheTests
 {
@@ -26,7 +26,7 @@ public class ElectionService_CacheTests
 
         var second = await sut.GetElectionAsync(election.Id);
 
-        Assert.Equal(election.Id, second.Id);
+        second.Id.ShouldBe(election.Id);
     }
 
     [Fact]
@@ -37,13 +37,12 @@ public class ElectionService_CacheTests
         var sut = new ElectionService(ctx, cache);
 
         var before = await sut.GetElectionsAsync(null);
-        Assert.Empty(before);
+        before.ShouldBeEmpty();
 
-        await sut.CreateElectionAsync(new CreateElectionDto(
-            "T", "D", DateTime.UtcNow, DateTime.UtcNow.AddDays(1), ElectionType.SingleChoice));
+        await sut.CreateElectionAsync(ElectionServiceTestData.ValidCreateElectionDto());
 
         var after = await sut.GetElectionsAsync(null);
-        Assert.Single(after);
+        after.Count().ShouldBe(1);
     }
 
     [Fact]
@@ -60,7 +59,7 @@ public class ElectionService_CacheTests
         await ctx.SaveChangesAsync();
 
         var first = await sut.GetResultsAsync(election.Id);
-        Assert.Equal(0, first.Results.Single().Score);
+        first.Results.Single().Score.ShouldBe(0);
 
         ctx.Votes.Add(new Vote
         {
@@ -72,6 +71,6 @@ public class ElectionService_CacheTests
         await ctx.SaveChangesAsync();
 
         var second = await sut.GetResultsAsync(election.Id);
-        Assert.Equal(0, second.Results.Single().Score);
+        second.Results.Single().Score.ShouldBe(0);
     }
 }
