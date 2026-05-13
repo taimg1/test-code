@@ -36,7 +36,6 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-// k6/CI часто ходять лише по HTTP; редірект на HTTPS дає зірвані клієнти без TLS на тому ж порту.
 var disableHttpsRedirect = string.Equals(
     Environment.GetEnvironmentVariable("DISABLE_HTTPS_REDIRECT"),
     "true",
