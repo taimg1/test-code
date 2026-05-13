@@ -57,9 +57,12 @@ jobs:
         env:
           ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=VotingSystem;Username=postgres;Password=postgres'
           ASPNETCORE_URLS: 'http://localhost:5032'
+          ASPNETCORE_ENVIRONMENT: 'Production'
           DISABLE_HTTPS_REDIRECT: 'true'
         run: |
-          nohup dotnet run --project VotingSystem.Api/VotingSystem.Api.csproj --configuration Release --no-build \
+          # Без --no-launch-profile dotnet підхоплює applicationUrl з launchSettings (5083) і ігнорує ASPNETCORE_URLS.
+          nohup dotnet run --project VotingSystem.Api/VotingSystem.Api.csproj \
+            --configuration Release --no-build --no-launch-profile \
             > /tmp/voting-api.log 2>&1 &
           echo $! > /tmp/voting-api.pid
           sleep 3
