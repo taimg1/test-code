@@ -1,0 +1,14 @@
+{
+  "name": "votingsystem-api-performance-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "k6 performance tests for VotingSystem API",
+  "scripts": {
+    "smoke": "k6 run scripts/smoke-test.ts",
+    "load": "k6 run scripts/load-test.ts",
+    "stress": "k6 run scripts/stress-test.ts"
+  },
+  "devDependencies": {
+    "@types/k6": "^1.0.0"
+  }
+}

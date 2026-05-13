@@ -1,0 +1,110 @@
+name: k6 Performance Tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'VotingSystem.Api/**'
+      - 'tests/VotingSystem.Api.Tests.Performance/**'
+      - '.github/workflows/k6.yml'
+  workflow_dispatch:
+    inputs:
+      test-type:
+        description: 'k6 test type to run'
+        required: true
+        default: smoke
+        type: choice
+        options: [smoke, load, stress]
+
+jobs:
+  k6:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: VotingSystem
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Restore and Build
+        run: |
+          dotnet restore VotingSystem.slnx
+          dotnet build VotingSystem.slnx --no-restore --configuration Release
+
+      - name: Start API
+        env:
+          ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=VotingSystem;Username=postgres;Password=postgres'
+          ASPNETCORE_URLS: 'http://localhost:5032'
+          DISABLE_HTTPS_REDIRECT: 'true'
+        run: |
+          nohup dotnet run --project VotingSystem.Api/VotingSystem.Api.csproj --configuration Release --no-build \
+            > /tmp/voting-api.log 2>&1 &
+          echo $! > /tmp/voting-api.pid
+          sleep 3
+          tail -n 40 /tmp/voting-api.log || true
+
+      - name: Wait for API
+        run: |
+          set -e
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:5032/health/ready; then
+              echo "API is ready"
+              exit 0
+            fi
+            echo "Waiting... ($i/60)"
+            tail -n 40 /tmp/voting-api.log 2>/dev/null || true
+            sleep 2
+          done
+          echo "::error::API /health/ready did not respond"
+          cat /tmp/voting-api.log || true
+          exit 1
+
+      - name: Determine test type
+        id: test-type
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "type=smoke" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=${{ inputs.test-type }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run k6
+        run: |
+          k6 run \
+            -e BASE_URL=http://localhost:5032 \
+            "tests/VotingSystem.Api.Tests.Performance/scripts/${{ steps.test-type.outputs.type }}-test.ts" \
+            --summary-export=k6-results.json
+
+      - name: Stop API
+        if: always()
+        run: |
+          if [ -f /tmp/voting-api.pid ]; then
+            kill "$(cat /tmp/voting-api.pid)" 2>/dev/null || true
+          fi
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k6-results-${{ steps.test-type.outputs.type }}
+          path: k6-results.json

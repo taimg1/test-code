@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using VotingSystem.Api.Data;
 using VotingSystem.Api.Services;
@@ -16,6 +17,9 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<VotingDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<VotingDbContext>("database");
 
 var app = builder.Build();
 
@@ -41,6 +45,16 @@ if (!disableHttpsRedirect)
     app.UseHttpsRedirection();
 
 app.MapControllers();
+
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = _ => false
+});
+
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = _ => true
+});
 
 app.Run();
 
