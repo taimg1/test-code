@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using VotingSystem.Api.Domain.Entities;
 
-namespace VotingSystem.Api.Infrastructure.Data;
+namespace VotingSystem.Api.Data;
 
 public class VotingDbContext : DbContext
 {

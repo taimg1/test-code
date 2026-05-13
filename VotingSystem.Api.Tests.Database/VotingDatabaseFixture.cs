@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
 using VotingSystem.Api.Domain.Entities;
 using VotingSystem.Api.Domain.Enums;
-using VotingSystem.Api.Infrastructure.Data;
+using VotingSystem.Api.Data;
 
 namespace VotingSystem.Api.Tests.Database;
 

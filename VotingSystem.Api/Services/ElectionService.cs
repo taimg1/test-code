@@ -7,7 +7,7 @@ using Microsoft.Extensions.Caching.Memory;
 using VotingSystem.Api.Domain.Entities;
 using VotingSystem.Api.Domain.Enums;
 using VotingSystem.Api.DTOs;
-using VotingSystem.Api.Infrastructure.Data;
+using VotingSystem.Api.Data;
 
 namespace VotingSystem.Api.Services;
 

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
-using VotingSystem.Api.Infrastructure.Data;
+using VotingSystem.Api.Data;
 
 namespace VotingSystem.Api.Tests.Integration.Infrastructure;
 

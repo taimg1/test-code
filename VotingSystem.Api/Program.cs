@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using VotingSystem.Api.Infrastructure.Data;
+using VotingSystem.Api.Data;
 using VotingSystem.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,7 +32,13 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// k6/CI часто ходять лише по HTTP; редірект на HTTPS дає зірвані клієнти без TLS на тому ж порту.
+var disableHttpsRedirect = string.Equals(
+    Environment.GetEnvironmentVariable("DISABLE_HTTPS_REDIRECT"),
+    "true",
+    StringComparison.OrdinalIgnoreCase);
+if (!disableHttpsRedirect)
+    app.UseHttpsRedirection();
 
 app.MapControllers();
 

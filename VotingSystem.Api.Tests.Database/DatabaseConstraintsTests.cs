@@ -1,6 +1,6 @@
 using VotingSystem.Api.Domain.Entities;
 using VotingSystem.Api.Domain.Enums;
-using VotingSystem.Api.Infrastructure.Data;
+using VotingSystem.Api.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace VotingSystem.Api.Tests.Database;

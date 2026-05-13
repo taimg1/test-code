@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using VotingSystem.Api.Domain.Entities;
 using VotingSystem.Api.Domain.Enums;
-using VotingSystem.Api.Infrastructure.Data;
+using VotingSystem.Api.Data;
 using VotingSystem.Api.Services;
 
 namespace VotingSystem.Api.Tests.Services;

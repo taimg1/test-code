@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using VotingSystem.Api.Domain.Enums;
 using VotingSystem.Api.DTOs;
-using VotingSystem.Api.Infrastructure.Data;
+using VotingSystem.Api.Data;
 using Microsoft.Extensions.DependencyInjection;
 using VotingSystem.Api.Tests.Integration.Infrastructure;
 

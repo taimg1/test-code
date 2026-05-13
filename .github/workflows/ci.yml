@@ -68,21 +68,35 @@ jobs:
         dotnet restore
         dotnet build --no-restore --configuration Release
 
+    # Фоновий процес без nohup гасне після завершення кроку — k6 отримує connection refused.
     - name: Start API for k6 Tests
-      run: dotnet run --project VotingSystem.Api/VotingSystem.Api.csproj --configuration Release &
       env:
         ASPNETCORE_URLS: http://localhost:5032
+        DISABLE_HTTPS_REDIRECT: 'true'
+        ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=VotingSystem;Username=postgres;Password=postgres'
+      run: |
+        nohup dotnet run --project VotingSystem.Api/VotingSystem.Api.csproj --configuration Release --no-build \
+          > /tmp/voting-api.log 2>&1 &
+        echo $! > /tmp/voting-api.pid
+        sleep 2
+        tail -n 30 /tmp/voting-api.log || true
 
     - name: Wait for API to be ready
       run: |
+        set -e
         for i in $(seq 1 60); do
-          if curl -s -o /dev/null -w "%{http_code}" localhost:5032/api/elections | grep -q "200"; then
-            echo "API is ready"
-            break
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:5032/api/elections || echo '000')
+          if [ "$code" = "200" ]; then
+            echo "API is ready (HTTP $code)"
+            exit 0
           fi
-          echo "Waiting... ($i)"
+          echo "Waiting... ($i/60) HTTP $code"
+          tail -n 40 /tmp/voting-api.log 2>/dev/null || true
           sleep 2
         done
+        echo "::error::API did not respond with HTTP 200 on /api/elections"
+        cat /tmp/voting-api.log || true
+        exit 1
 
     - name: Run k6 Smoke Test
       run: k6 run VotingSystem.PerformanceTests/k6/smoke-test.js --summary-export=k6-smoke.json
@@ -92,6 +106,13 @@ jobs:
 
     - name: Run k6 Stress Test
       run: k6 run VotingSystem.PerformanceTests/k6/stress-test.js --summary-export=k6-stress.json
+
+    - name: Stop API
+      if: always()
+      run: |
+        if [ -f /tmp/voting-api.pid ]; then
+          kill "$(cat /tmp/voting-api.pid)" 2>/dev/null || true
+        fi
 
     - name: Upload k6 results
       uses: actions/upload-artifact@v4
